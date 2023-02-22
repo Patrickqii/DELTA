@@ -1,25 +1,17 @@
 clear
-load('C:\Users\Administrator\Desktop\My_Research\data\Recon3D_301\Recon3DModel_301.mat')
-WT = ['GSE148697_Lung_infect', 'GSE153218_SmallAirway_infect'];
-path = 'C:\Users\Administrator\Desktop\My_Research\data\covid\result\GSE148697_Lung_infect\';
-%path = 'C:\Users\Administrator\Desktop\COVID-19\result_gamma\GSE171524_Lung_infect\';
+load('..\Data\Recon3D_301\Recon3DModel_301.mat')
+path = '..\Data\result\GSE148697_Lung_infect\';
 
 target = load(strcat(path,'target.txt'));
 load(strcat(path, 'Specific_Model.mat'))
 
 plpbp = {'11212.1'};
-plpbp_index=find(ismember(Specific_Model.genes,'11212.1'));%²é¿´deltaÖĞÊÇ·ñ´æÔÚPLPBP»ùÒò£¬ÓĞµÄ»°£¬ÕÒµ½ÆäË÷Òı
+plpbp_index=find(ismember(Specific_Model.genes,'11212.1'));
 plpbp_met = 'ala_D[c]';
-plpbp_met_index = find(ismember(Specific_Model.mets, plpbp_met));%d-±û°±ËáÔÚÌØÒìÄ£ĞÍÖĞµÄË÷Òı
-plpbp_relate_reac = find(Specific_Model.S(plpbp_met_index,:)>0);%ÕÒµ½ÌØÒìÄ£ĞÍÖĞÉú³Éd-±û°±ËáµÄ·´Ó¦
+plpbp_met_index = find(ismember(Specific_Model.mets, plpbp_met));
+plpbp_relate_reac = find(Specific_Model.S(plpbp_met_index,:)>0);
 
-%ÒÔrecon3DÄ£ĞÍÀ´Ó³ÉäplpbpµÄ·´Ó¦
-% plpbp_relate_reac = map_gene_to_reac(plpbp, Recon3DModel);
-% plpbp_relate_reac = Recon3DModel.rxns(plpbp_relate_reac);%plpbp¶ÔÓ¦·´Ó¦Ãû
-% plpbp_relate_reac = find(ismember(Specific_Model.rxns, plpbp_relate_reac));
-%ÒÔSpecific_ModelÀ´Ó³Éäplpbp·´Ó¦
-%plpbp_relate_reac = map_gene_to_reac(plpbp, Specific_Model);
-%ÏÂÃæĞèÒªÊ×ÏÈ¼ÆËã³ö²»½øĞĞ·´Ó¦ÇÃ³ıÊ±µÄ·´Ó¦Í¨Á¿
+
 try
     setRavenSolver('mosek')
     solution = solveLPR(Specific_Model);
@@ -32,8 +24,8 @@ catch err
 end
 solution_init = solution;
 
-plpbp_relate_reac = plpbp_relate_reac(find(solution.x(plpbp_relate_reac)>1e-6));%ÕÒµ½³õÊ¼Çó½â½á¹ûÖĞÉú³Éd-±û°±ËáÇÒÍ¨Á¿²»Îª0µÄ·´Ó¦
-%plpbp_flux = solution.x(plpbp_relate_reac);%plpbpÏà¹Ø·´Ó¦Í¨Á¿,ÀàĞÍÎªcellÊı×é
+plpbp_relate_reac = plpbp_relate_reac(find(solution.x(plpbp_relate_reac)>1e-6));%æ‰¾åˆ°åˆå§‹æ±‚è§£ç»“æœä¸­ç”Ÿæˆd-ä¸™æ°¨é…¸ä¸”é€šé‡ä¸ä¸º0çš„ååº”
+%plpbp_flux = solution.x(plpbp_relate_reac);%plpbpç›¸å…³ååº”é€šé‡,ç±»å‹ä¸ºcellæ•°ç»„
 plpbp_relate_reac_name=Specific_Model.rxns(plpbp_relate_reac);
 
 upriver_reac = [];
@@ -43,14 +35,14 @@ for i=1:length(target)
 end
 relate_reac = [];
 for i=1:length(Target)
-    relate_reac_item = map_gene_to_reac(Target(i), Specific_Model);%Í¨¹ıGPRsÓ³ÉäµÃµ½¸ÃÌØÒìĞÔÄ£ĞÍ°ĞµãÏà¹Ø·´Ó¦
+    relate_reac_item = map_gene_to_reac(Target(i), Specific_Model);
     relate_reac = [relate_reac; relate_reac_item];
 end
 
-%ÏÂÃæĞèÒªÖğÒ»ÇÃ³ıÕâĞ©·´Ó¦£¬Ò²¾ÍÊÇ½«ËüÃÇµÄvÉèÎª0
+
 for i=1:length(relate_reac)
    Specific_Model_sqlite = Specific_Model;
-   %½«·´Ó¦Í¨Á¿µÄÉÏÏÂ½çÉè0
+
    Specific_Model_sqlite.lb(relate_reac(i)) = 0;
    Specific_Model_sqlite.ub(relate_reac(i)) = 0;
    try
@@ -63,11 +55,11 @@ for i=1:length(relate_reac)
        solution = optimizeCbModel(Specific_Model_sqlite, 'max');
        solution.f = -solution.f;
     end
-    %¶ÔÓÚÉÏÓÎ·´Ó¦µÄÅĞ¶Ï
-    if isempty(find(solution.x(plpbp_relate_reac)>1e-6))%µ±Ç°°ĞµãÏà¹Ø»ùÒòÇÃ³ıÖ®ºó£¬d-±û°±ËáÉú³É·´Ó¦Í¨Á¿È«Îª0
+
+    if isempty(find(solution.x(plpbp_relate_reac)>1e-6))
         upriver_reac = [upriver_reac; relate_reac(i)];
     end
 end
-%½«·´Ó¦´òÓ¡³öÀ´£¬ºóĞøÊ¹ÓÃº¯Êı²Ù×÷
+
 upriver_reac_name = Specific_Model.rxns(upriver_reac);
 disp('hello world')
