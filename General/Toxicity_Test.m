@@ -1,17 +1,5 @@
 function [ target ] = Toxicity_Test( ess_gene_name , Path_Used , Save_Path , Output_File_Name , Target_File_Name , Need_Map , Need_Split)
-%TOXICITY_TEST 毒性测试
-%{
-  input params:
-      ess_gene_name：必要基因列表
-      Path_Used：函数中使用到的函数和文件路径
-      Save_Path：输出文件的路径
-      Output_File_Name：输出毒性结果文件的文件名（不含后缀）
-      Target_File_Name：输出靶点结果文件的文件名（不含后缀）
-      Need_Map：结构体，bool属性表示是否需要将ENSG格式的基因映射到Entrez，1-需要，0-不需要，默认为0。ENSG和Entrez为映射关系，若bool=0则无该属性。
-      Need_Split：基因是否需要切割版本号，1-需要，0-不需要，默认为1
-  output params:
-      target：有效靶点
-%}
+%TOXICITY_TEST 
 
 if nargin < 7 || ~exist('Need_Split','var')
     Need_Split = 1;
@@ -77,7 +65,7 @@ for j=1:83
                 Model_reduced=removeGenes(model,Rgene);
                 taskReport=checkTasks(Model_reduced,[],true,false,false,task);
                 t=find(taskReport.ok==0);
-                if t%不能完成56项代谢任务
+                if t%can not run 56 metabolic tasks
                     result_gene(i,1)=result_gene(i,1)-1;
                     flag_gene(i,j)=-1;
                     fail_task(i,j)={t};
