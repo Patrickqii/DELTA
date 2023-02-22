@@ -1,5 +1,5 @@
 clear
-root_path='..\Data\covid\result';
+root_path='..\Data\result';
 knoc_gene_path='.\s.txt';
 Srelategene=load(knoc_gene_path);
 dirs = dir(root_path);
