@@ -1,5 +1,5 @@
-# DELTA
-#### Description of files and folders ####
+# Description of files and folders
+
 run.m: Project execution entry
 
 Analysis: 
